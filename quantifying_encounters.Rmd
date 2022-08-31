@@ -1,0 +1,101 @@
+---
+title: "Quantifying the Difficulty of an Encounter in Dungeons and Dragons, 5e"
+author: "Thomas Schechter"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# Introduction
+
+Dungeons and Dragons; the phrase that sparked a phenomenon. From the early years of paper, pencils, and dice rolling, to the modern age of virtual tabletops, Dungeons and Dragons (DnD) is a cultural juggernaut. Stranger Things brought it into the mainstream in 2016, and it has exponentially grown into a passion - or obsession - for millions.
+
+One difficult aspect of DnD, particularly in its 5th edition (5e), is tuning and balancing encounters from a combat perspective.
+
+The goal of the Dungeon Master (DM) is never - or should never - be to wipe the party, resulting in a total party knockout (TPK). Therefore, as a passionate DM myself, I have taken it upon me to attempt to quantify encounter difficulty beyond the standard, seldom-used Challenge Rating system.
+
+I will be attempting to create a model to quantify difficulty within DnD combat, using predictive algorithms to determine either the difficulty rating, or classify potential success for the party. How do we as DMs challenge and balance combat in our games without being brutal or unfair? That is what I hope to find out.
+
+# Preliminary Data Wrangling
+
+The first step, as is always the case, is loading in our packages. I will include the code for this, as well as subsequent data wrangling and analysis, in this work.
+
+```{r}
+#Loading in packages:
+library(pacman)
+p_load(tidymodels,tidyverse,data.table,ggplot2,parsnip,ranger,parallel,pbapply,magrittr,missMethods)
+```
+
+We will be using data from Kaggle, a commonly used data science practice ad competition website. It details that stats of various monsters and NPCs in DnD 5e.
+
+```{r}
+#Start by exploring the data. 
+
+#First we must load it in:
+
+stat_blocks <- "~/data_work/dnd_data/aidedd_blocks2.csv" %>% fread()
+
+#Load the data in through data.table
+#creates an efficient, easy to use dataset format
+```
+
+
+```{r}
+#Look at the primary statistics given by the dataset
+
+stat_blocks %>% summary()
+```
+
+Not every monster has every stat detailed. In fact, most monsters and NPCs are missing *most* of these statistics. Each monster is detailed on a "need-to-know" basis, it seems. The relevant stats to its combat abilities are included, and the rest are simply left blank.
+
+Challenge Ratings, HP, movement speed, etc. range from 0 to absurdly high numbers. 
+
+## Find the Outliers
+
+```{r}
+#find the outliers
+
+npc676 <- stat_blocks[which(stat_blocks$hp==676),]
+
+npc676
+```
+
+The mighter tarrasque, the bane of any DnD player, is our big health outlier. 676 health! How does this compare to the rest of the dataset?
+
+```{r}
+#add the statistics of these stats (mean, sd, mode, etc) to the dataset in their own row
+
+Statistics <- data.table("name"="Statistics","size"= find_mode(stat_blocks$size),"type"= find_mode(stat_blocks$type),"alignment"=find_mode(stat_blocks$alignment), "languages"=find_mode(stat_blocks$languages),"ac"=mean(stat_blocks$ac),"hp"=mean(stat_blocks$hp),"cr"=mean(stat_blocks$cr))
+
+find_mode <- function(x) {
+  u <- unique(x)
+  tab <- tabulate(match(x, u))
+  u[tab == max(tab)]
+}
+find_mode(stat_blocks$type)
+
+print(Statistics)
+```
+
+```{r}
+#add the statistics row to the dataset
+
+stats_2 <- data.table::copy(stat_blocks)
+
+stats_2 <- rbindlist(list(stat_blocks,Statistics),fill=TRUE)
+
+#we now have the statistics for the first 8 columns, impute the rest
+```
+
+```{r}
+#Impute all numeric values
+
+stats_2 <- apply_imputation(stats_2, FUN = mean, type = "columnwise")
+
+#Use the fxn above to impute modally all characer values
+
+stats_2 <- apply_imputation(stats_2, FUN = find_mode, type = "columnwise")
+
+#Are we still missing any values?
+
+stats_2 %>% anyNA()
+```
+We now are missing none of the values anywhere in the dataset. 
