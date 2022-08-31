@@ -1,0 +1,87 @@
+---
+title: "Dungeons & Dragons Projects"
+author: "Thomas Schechter"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+This is going to be the quintissential nerdy project to both showcase skills and improve my DnD capabilities.
+
+```{r}
+#Load in packages
+
+library(pacman)
+
+p_load(magrittr,tidyverse,tidymodels,parallel,pbapply,data.table,dnddata,readr,caret,glmnet)
+```
+
+```{r}
+#import data
+items <- "~/data_work/dnd_data/roll_20_items.csv" %>% fread()
+
+blocks <- "~/data_work/dnd_data/aidedd_blocks2.csv" %>% fread()
+
+monsters <-"~/data_work/dnd_data/cleaned_monsters_basic.csv" %>% fread() 
+
+stats <- "~/data_work/dnd_data/stats.csv" %>% fread() 
+"
+```
+
+What is our goal with all this data? What do we want to do with it?
+
+Do we want to improve DM capabilities by estimating the challenge of an encounter?
+
+Do we want to quantify the effects of an item?
+
+Maybe we can use this data to improve and create?
+
+Let's start by perusing the character stats rolled in "Stats".
+
+
+```{r}
+#Let us explore the data a bit
+
+summary(stats)
+```
+We have the general ability scores and statistics here. Race, height, weight, speed, and abilities, respectively. No indication of race or class, nor proficiencies, but we have the basics.
+
+```{r}
+race_vector <- unique(stats$race)
+race_vector
+```
+
+We have the generic, base 5e races. No signs of gith, genasi, vedalken, aarakocra, aasimar, etc.
+
+Let's see what our monsters have in store...
+
+```{r}
+summary(monsters)
+```
+We have 45 unique variables in "Monsters". What shall we do first? 
+
+Let's take a look at the challenge rating, associated with certain statistics.
+
+```{r}
+#turn cr into a numeric variable
+
+monsters$cr <- as.numeric(monsters$cr)
+
+#We now have some missing challenge ratings... let's fix that.
+#Let's try and predict the challenge ratings for any NA values, with the training data functioning as non-missing cr observations
+
+#set a seed and split our data
+
+set.seed(123)
+
+training <- monsters %>% filter(is.na(monsters$cr)==FALSE)
+
+test <- monsters %>% filter(is.na(monsters$cr)==TRUE)
+
+#The training and testing data have been split.
+```
+
+Let's explore the training data a little bit.
+
+```{r}
+#
+```
