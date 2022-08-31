@@ -141,4 +141,11 @@ perf_lasso <- fit_monsters_lasso %>%
 perf_lasso %>% 
   arrange(.metric)
 ```
+```{r}
+#Predict the missing values in testing data
+
+test$cr <- predict(fit_monsters_lasso,test)
+
+view(test)
+```
 
