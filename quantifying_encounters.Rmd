@@ -60,16 +60,22 @@ npc676
 
 The mighter tarrasque, the bane of any DnD player, is our big health outlier. 676 health! How does this compare to the rest of the dataset?
 
+We will need to impute to find the mean and mode of every variable, jumbled into the new row, Statistics (763).
+
+## Imputation and Cleaning
+
 ```{r}
 #add the statistics of these stats (mean, sd, mode, etc) to the dataset in their own row
 
-Statistics <- data.table("name"="Statistics","size"= find_mode(stat_blocks$size),"type"= find_mode(stat_blocks$type),"alignment"=find_mode(stat_blocks$alignment), "languages"=find_mode(stat_blocks$languages),"ac"=mean(stat_blocks$ac),"hp"=mean(stat_blocks$hp),"cr"=mean(stat_blocks$cr))
+#create a fxn to find the mode of character vectors
 
 find_mode <- function(x) {
   u <- unique(x)
   tab <- tabulate(match(x, u))
   u[tab == max(tab)]
 }
+
+Statistics <- data.table("name"="Statistics","size"= find_mode(stat_blocks$size),"type"= find_mode(stat_blocks$type),"alignment"=find_mode(stat_blocks$alignment), "languages"=find_mode(stat_blocks$languages),"ac"=mean(stat_blocks$ac),"hp"=mean(stat_blocks$hp),"cr"=mean(stat_blocks$cr))
 find_mode(stat_blocks$type)
 
 print(Statistics)
@@ -98,4 +104,13 @@ stats_2 <- apply_imputation(stats_2, FUN = find_mode, type = "columnwise")
 
 stats_2 %>% anyNA()
 ```
-We now are missing none of the values anywhere in the dataset. 
+We now are missing none of the values anywhere in the dataset. Everything has been imputed!
+
+We can now work confidently with our data.
+
+# Initial Regression Analysis
+
+```{r}
+
+```
+
