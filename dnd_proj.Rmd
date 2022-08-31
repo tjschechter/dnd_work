@@ -83,5 +83,29 @@ test <- monsters %>% filter(is.na(monsters$cr)==TRUE)
 Let's explore the training data a little bit.
 
 ```{r}
-#
+training %>% head()
 ```
+Quite a few stats have 0 values for many monsters. We won't impute these, rather we'll just leave them be. If the model is flimsy, we will fix it later.
+
+```{r}
+#create the recipe to clean the data prior to prediction
+
+monster_rec <- recipe(
+  cr ~ .,
+  data=training, 
+) %>%
+  step_dummy(all_nominal()) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors()) %>%
+  step_nzv(all_predictors())
+
+monster_rec
+```
+```{r}
+#Now we have cleaned data, let's prep and juice it.
+
+trained_monsters <- monster_rec %>% prep() %>% juice()
+
+trained_monsters
+```
+
