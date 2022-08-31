@@ -108,4 +108,37 @@ trained_monsters <- monster_rec %>% prep() %>% juice()
 
 trained_monsters
 ```
+```{r}
+#Create our workflow and set the engine
+monster_lasso <- linear_reg(penalty = 0.001, mixture = 1) %>% 
+  set_engine("glmnet")
+
+
+monster_lasso_wflow <- workflow() %>% add_recipe(monster_rec) %>% add_model(monster_lasso)
+```
+
+```{r}
+#fit our model
+
+fit_monsters_lasso <- fit(monster_lasso_wflow,training)
+
+#predict!
+
+predict(fit_monsters_lasso, training)
+
+```
+Now that we have a model (a LASSO regression, in this instance), let's see how it performed!
+```{r}
+#Collect metrics
+
+perf_metrics <- metric_set(rmse, rsq, ccc)
+
+perf_lasso <- fit_monsters_lasso %>% 
+  predict(training) %>% 
+  bind_cols(juice(monster_rec %>% prep())) %>% 
+  perf_metrics(truth = cr, estimate = .pred)
+
+perf_lasso %>% 
+  arrange(.metric)
+```
 
